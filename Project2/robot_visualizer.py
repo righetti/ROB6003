@@ -71,7 +71,7 @@ def start_robot_visualizer():
     server_args = []
     if 'google.colab' in sys.modules:
         server_args = ['--ngrok_http_tunnel']
-        package_dirs = '/content/ROB6003-private/Project1/urdf/'
+        package_dirs = '/content/ROB6003/Project2/urdf/'
     else:
         package_dirs = './urdf/'
 
