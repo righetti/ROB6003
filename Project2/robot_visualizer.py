@@ -120,8 +120,10 @@ def display_ball(pos):
 def display_ball2(pos):
     robot.viz.viewer['ball2'].set_transform(meshcat.transformations.translation_matrix(pos))
     
-    
-def simulate_robot(robot_controller, T=10.):
+def rnea(q, dq, ddq):
+    return pin.pinocchio_pywrap.rnea(robot.pin_robot.model, robot.pin_robot.data, q, dq, ddq).reshape((7,1))
+
+def simulate_robot(robot_controller, T=10., gravity_comp=True):
     t = 0.
     dt = 0.001
     q = np.zeros([7,1])
@@ -130,12 +132,12 @@ def simulate_robot(robot_controller, T=10.):
     t_visual = 0
     dt_visual = 0.01
     while(t<T):
-        M = robot.pin_robot.mass(q)
-        nle = robot.pin_robot.nle(q, dq)
-        tau = robot_controller(t, q.reshape((7,1)), dq.reshape((7,1)))
         g = robot.pin_robot.gravity(q.reshape((7,1)))
-        ddq = np.linalg.inv(M) @ (tau - nle.reshape((7,1)) + g.reshape((7,1)))
-        dq += dt * ddq
+        tau = robot_controller(t, q.reshape((7,1)), dq.reshape((7,1)))
+        if gravity_comp:
+            tau = tau + g.reshape((7,1))
+        ddq = pin.pinocchio_pywrap.aba(robot.pin_robot.model, robot.pin_robot.data, q, dq, tau)
+        dq += dt * ddq.reshape((7,1))
         q += dt*dq
         if t_visual == 10:
             display_robot(q)
